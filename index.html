@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>5.000 - PERFECT LIMITS</title>
+    <style>
+        :root { --gold: #ffd700; --neon-green: #39ff14; --danger: #ff4444; --metal: #a8a8a8; }
+        html, body { overflow: hidden; height: 100%; width: 100%; margin: 0; background: #050505; color: white; font-family: 'Arial Black', sans-serif; }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 10px; }
+
+        /* PANTALLA INICIAL */
+        #pantalla-inicio {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98); z-index: 2000;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .selector-box { background: #111; padding: 40px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; }
+        .btn-jugador { width: 60px; height: 60px; margin: 10px; font-size: 24px; border-radius: 50%; border: 2px solid var(--gold); background: transparent; color: white; cursor: pointer; }
+
+        /* MARCADORES */
+        .panel-superior { width: min(94vw, 580px); text-align: center; }
+        .grid-jugadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; margin-bottom: 5px; }
+        .jugador-box { background: rgba(255,255,255,0.03); padding: 10px 5px; border-radius: 12px; border: 1px solid #333; transition: all 0.3s ease; }
+        .jugador-box.activo { border-color: var(--neon-green); background: rgba(57, 255, 20, 0.08); box-shadow: 0 0 15px rgba(57, 255, 20, 0.2); transform: scale(1.05); }
+        .label-jugador { font-size: 10px; letter-spacing: 1px; color: #888; text-transform: uppercase; margin-bottom: 4px; }
+        .jugador-box.activo .label-jugador { color: var(--neon-green); }
+        .pts-t { font-size: 20px; color: var(--gold); text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .marcador-turno { display: inline-block; background: rgba(0,0,0,0.8); padding: 2px 30px; border-radius: 50px; border: 2px solid var(--gold); margin: 5px 0; }
+        .val-turno { font-size: 32px; color: var(--gold); }
+        #anuncio { font-size: 14px; color: #aaa; height: 20px; }
+
+        /* TABLERO CON BORDE GRUESO */
+        .fieltro { 
+            width: min(94vw, 550px); height: min(48vh, 380px); 
+            background: radial-gradient(circle, #2ecc71 0%, #144418 100%); 
+            border-radius: 40px; border: 12px solid #3d2b1f; /* Este es el borde que no deben tocar */
+            display: flex; flex-direction: column; padding: 0; box-sizing: border-box;
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.8); position: relative;
+            overflow: hidden;
+        }
+        .zona-reserva { height: 75px; border-bottom: 2px dashed rgba(255,255,255,0.15); display: flex; justify-content: center; align-items: center; gap: 8px; z-index: 10; position: relative; }
+        .zona-tiro { flex-grow: 1; position: relative; width: 100%; overflow: visible; }
+
+        /* CUBILETE */
+        #cubilete {
+            position: absolute; width: 110px; height: 140px;
+            bottom: -160px; right: -30px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
+            border-radius: 40px 40px 8px 8px;
+            border: 1px solid #222; border-top: 3px solid var(--metal);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.9); z-index: 100;
+        }
+        .anim-lanzar { animation: lanzarFisico 1.6s ease-in-out forwards; }
+        @keyframes lanzarFisico {
+            0% { bottom: -160px; right: -30px; transform: rotate(15deg); }
+            20% { bottom: 40px; right: 40px; transform: rotate(-10deg); }
+            50% { transform: translate(-120px, -40px) rotate(-10deg); }
+            65% { transform: translate(-150px, -50px) rotate(160deg); }
+            100% { bottom: -220px; right: -80px; transform: rotate(40deg); }
+        }
+
+        /* DADOS */
+        .dado { 
+            position: absolute; width: 60px; height: 60px; background: #fff; 
+            border-radius: 10px; display: flex; align-items: center; justify-content: center; 
+            box-shadow: 2px 5px 12px rgba(0,0,0,0.6); opacity:0; 
+            transition: opacity 0.3s, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        .visible { opacity:1; }
+        .puntuando { border: 4px solid var(--neon-green); box-shadow: 0 0 20px var(--neon-green); z-index: 50; }
+        .reservado { position: static !important; transform: scale(0.7) rotate(0deg) !important; opacity: 0.9; margin: 0 2px; }
+
+        .controles { display: flex; gap: 15px; width: min(94vw, 550px); justify-content: center; margin-top: 5px; }
+        button { flex: 1; padding: 16px 0; font-size: 16px; font-weight: bold; border-radius: 50px; border: none; cursor: pointer; }
+        .btn-tirar { background: var(--gold); color: #000; box-shadow: 0 5px 0 #b8860b; }
+        .btn-plantar { background: #eee; color: #000; box-shadow: 0 5px 0 #999; }
+        button:disabled { opacity: 0.3; filter: grayscale(1); pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div id="pantalla-inicio">
+        <div class="selector-box">
+            <h1 style="color:var(--gold);">5.000 PRO</h1>
+            <p>Selecciona jugadores</p>
+            <div id="botones-inicio"></div>
+        </div>
+    </div>
+
+    <div class="panel-superior">
+        <div id="grid-jugadores" class="grid-jugadores"></div>
+        <div class="marcador-turno">
+            <span id="pts-turno" class="val-turno">0</span>
+        </div>
+        <div id="anuncio">¡Buena suerte!</div>
+    </div>
+
+    <div class="fieltro">
+        <div id="reserva" class="zona-reserva"></div>
+        <div id="zona-tiro" class="zona-tiro">
+            <div id="cubilete"></div>
+        </div>
+    </div>
+
+    <div class="controles">
+        <button id="btn-plantar" class="btn-plantar" onclick="plantarse()" disabled>PLANTARSE</button>
+        <button id="btn-tirar" class="btn-tirar" onclick="tirar()">¡TIRAR!</button>
+    </div>
+
+<script>
+    const sonidoCubilete = new Audio('cubilete.ogg'); 
+    const CARAS = [
+        { id: 0, valTrio: 100, html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div></div>' },
+        { id: 1, valTrio: 200, html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div></div>' },
+        { id: 2, valTrio: 300, html: '<b style="font-size:32px; color:#222">J</b>' },
+        { id: 3, valTrio: 400, html: '<b style="font-size:32px; color:#222">Q</b>' },
+        { id: 4, valTrio: 500, valInd: 50, html: '<b style="font-size:32px; color:red">K</b>' },
+        { id: 5, valTrio: 1000, valInd: 100, html: '<div style="width:24px; height:24px; background:red; border-radius:50%;"></div>' }
+    ];
+
+    let puntuaciones = [], turnoIdx = 0, puntosTurno = 0, dadosActivos = 5, numJugadores = 0;
+    let posicionesDados = []; 
+
+    // Función de voz
+    function decir(texto) {
+        const mensaje = new SpeechSynthesisUtterance(texto);
+        mensaje.lang = 'es-ES';
+        window.speechSynthesis.speak(mensaje);
+    }
+
+    const containerBtns = document.getElementById('botones-inicio');
+    for(let i=2; i<=6; i++) {
+        containerBtns.innerHTML += `<button class="btn-jugador" onclick="iniciarJuego(${i})">${i}</button>`;
+    }
+
+    function iniciarJuego(n) {
+        numJugadores = n;
+        puntuaciones = new Array(n).fill(0);
+        document.getElementById('pantalla-inicio').style.display = 'none';
+        const grid = document.getElementById('grid-jugadores');
+        grid.innerHTML = "";
+        for(let i=0; i<n; i++) {
+            grid.innerHTML += `<div id="j-box-${i}" class="jugador-box ${i===0?'activo':''}"><div class="label-jugador">Jugador ${i+1}</div><div id="j-pts-${i}" class="pts-t">0</div></div>`;
+        }
+        decir("Empieza el juego. Suerte.");
+    }
+
+    function obtenerPosicionSegura() {
+        const zona = document.getElementById('zona-tiro');
+        const dadoSize = 60;
+        const margenSeguridad = 15; 
+        const limiteX = zona.offsetWidth - dadoSize - margenSeguridad;
+        const limiteY = zona.offsetHeight - dadoSize - margenSeguridad;
+        const radioColision = 68; 
+        
+        let intentos = 0;
+        while (intentos < 100) {
+            let x = Math.random() * (limiteX - margenSeguridad) + margenSeguridad;
+            let y = Math.random() * (limiteY - margenSeguridad) + margenSeguridad;
+            
+            let choca = posicionesDados.some(p => {
+                let dist = Math.sqrt(Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2));
+                return dist < radioColision;
+            });
+
+            if (!choca) return {x, y};
+            intentos++;
+        }
+        return {x: margenSeguridad, y: margenSeguridad};
+    }
+
+    function tirar() {
+        const cubilete = document.getElementById('cubilete');
+        const zona = document.getElementById('zona-tiro');
+        sonidoCubilete.currentTime = 0;
+        sonidoCubilete.play().catch(() => {});
+
+        zona.querySelectorAll('.dado').forEach(d => d.remove());
+        posicionesDados = []; 
+        
+        cubilete.classList.remove('anim-lanzar');
+        void cubilete.offsetWidth;
+        cubilete.classList.add('anim-lanzar');
+
+        document.getElementById('btn-tirar').disabled = true;
+        document.getElementById('btn-plantar').disabled = true;
+
+        setTimeout(() => {
+            let res = Array.from({length: dadosActivos}, () => Math.floor(Math.random()*6));
+            procesarResultados(res);
+        }, 1100);
+    }
+
+    function procesarResultados(indices) {
+        const zona = document.getElementById('zona-tiro');
+        const reserva = document.getElementById('reserva');
+        let conteo = [0,0,0,0,0,0];
+        indices.forEach(idx => conteo[idx]++);
+        let ptsTirada = 0, usados = 0;
+
+        indices.forEach((idx, i) => {
+            const d = document.createElement('div');
+            d.className = 'dado';
+            d.innerHTML = CARAS[idx].html;
+            
+            const pos = obtenerPosicionSegura();
+            posicionesDados.push(pos);
+            
+            d.style.left = pos.x + "px";
+            d.style.top = pos.y + "px";
+            const rot = Math.random() * 60 - 30;
+            
+            zona.appendChild(d);
+            setTimeout(() => {
+                d.classList.add('visible');
+                d.style.transform = `rotate(${rot}deg)`;
+            }, i * 100);
+
+            let puntua = (idx === 4 || idx === 5 || conteo[idx] >= 3);
+            if (puntua) {
+                usados++;
+                setTimeout(() => {
+                    d.classList.add('puntuando');
+                    setTimeout(() => { 
+                        d.classList.replace('puntuando', 'reservado'); 
+                        reserva.appendChild(d); 
+                    }, 800);
+                }, 1200 + (i*100));
+            }
+        });
+
+        conteo.forEach((cant, id) => {
+            if (cant >= 3) {
+                ptsTirada += CARAS[id].valTrio + (id === 4 ? (cant-3)*50 : id === 5 ? (cant-3)*100 : 0);
+            } else {
+                if (id === 4) ptsTirada += cant*50;
+                if (id === 5) ptsTirada += cant*100;
+            }
+        });
+
+        setTimeout(() => {
+            if (ptsTirada === 0) {
+                document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡NADA! PIERDES TURNO</b>";
+                decir("¡Cero patatero!"); // Frase solicitada
+                setTimeout(cambiarTurno, 2000);
+            } else {
+                puntosTurno += ptsTirada;
+                dadosActivos -= usados;
+                document.getElementById('pts-turno').innerText = puntosTurno;
+                if(dadosActivos === 0) {
+                    document.getElementById('anuncio').innerText = "¡MESA LIMPIA! TIRAS DE NUEVO";
+                    decir("¡Mesa limpia!");
+                    setTimeout(() => { reserva.innerHTML = ""; dadosActivos = 5; }, 1200);
+                }
+                validarControles();
+            }
+        }, 2200);
+    }
+
+    function validarControles() {
+        let min = (puntuaciones[turnoIdx] >= 4000) ? 100 : 300;
+        let puede = (puntosTurno >= min && puntosTurno % 100 === 0);
+        if (puntuaciones[turnoIdx] + puntosTurno > 5000) {
+            document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡TE PASASTE!</b>";
+            decir("Te has pasado de cinco mil.");
+            setTimeout(cambiarTurno, 1500);
+            return;
+        }
+        document.getElementById('btn-tirar').disabled = false;
+        document.getElementById('btn-plantar').disabled = !puede;
+    }
+
+    function plantarse() {
+        decir("Te plantas con " + puntosTurno + " puntos.");
+        puntuaciones[turnoIdx] += puntosTurno;
+        document.getElementById(`j-pts-${turnoIdx}`).innerText = puntuaciones[turnoIdx];
+        if (puntuaciones[turnoIdx] === 5000) { 
+            decir("¡Enhorabuena! Jugador " + (turnoIdx+1) + " ha ganado la partida.");
+            alert("¡VICTORIA PARA J" + (turnoIdx+1) + "!"); 
+            location.reload(); 
+        }
+        else cambiarTurno();
+    }
+
+    function cambiarTurno() {
+        puntosTurno = 0; dadosActivos = 5;
+        document.querySelectorAll('.jugador-box').forEach(b => b.classList.remove('activo'));
+        turnoIdx = (turnoIdx + 1) % numJugadores;
+        document.getElementById(`j-box-${turnoIdx}`).classList.add('activo');
+        document.getElementById('pts-turno').innerText = "0";
+        document.getElementById('reserva').innerHTML = "";
+        document.getElementById('zona-tiro').querySelectorAll('.dado').forEach(d => d.remove());
+        document.getElementById('anuncio').innerText = `Turno Jugador ${turnoIdx+1}`;
+        decir("Turno del jugador " + (turnoIdx+1));
+        document.getElementById('btn-tirar').disabled = false;
+        document.getElementById('btn-plantar').disabled = true;
+    }
+</script>
+</body>
+</html>
