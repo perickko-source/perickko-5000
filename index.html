@@ -2,24 +2,28 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>5.000 - PERFECT LIMITS</title>
     <style>
         :root { --gold: #ffd700; --neon-green: #39ff14; --danger: #ff4444; --metal: #a8a8a8; }
-        html, body { overflow: hidden; height: 100%; width: 100%; margin: 0; background: #050505; color: white; font-family: 'Arial Black', sans-serif; }
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 10px; }
+        html, body { 
+            overflow: hidden; height: 100dvh; width: 100%; margin: 0; 
+            background: #050505; color: white; font-family: 'Arial Black', sans-serif; 
+            touch-action: none; /* Evita zoom/scroll accidental en móvil */
+        }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; gap: 10px; }
 
         /* PANTALLA INICIAL */
         #pantalla-inicio {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
             background: rgba(0,0,0,0.98); z-index: 2000;
             display: flex; align-items: center; justify-content: center;
         }
-        .selector-box { background: #111; padding: 40px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; }
+        .selector-box { background: #111; padding: 40px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; width: min(90vw, 400px); }
         .btn-jugador { width: 60px; height: 60px; margin: 10px; font-size: 24px; border-radius: 50%; border: 2px solid var(--gold); background: transparent; color: white; cursor: pointer; }
 
         /* MARCADORES */
-        .panel-superior { width: min(94vw, 580px); text-align: center; }
+        .panel-superior { width: min(94vw, 580px); text-align: center; z-index: 10; position: relative; }
         .grid-jugadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; margin-bottom: 5px; }
         .jugador-box { background: rgba(255,255,255,0.03); padding: 10px 5px; border-radius: 12px; border: 1px solid #333; transition: all 0.3s ease; }
         .jugador-box.activo { border-color: var(--neon-green); background: rgba(57, 255, 20, 0.08); box-shadow: 0 0 15px rgba(57, 255, 20, 0.2); transform: scale(1.05); }
@@ -32,12 +36,12 @@
 
         /* TABLERO CON BORDE GRUESO */
         .fieltro { 
-            width: min(94vw, 550px); height: min(48vh, 380px); 
+            width: min(94vw, 550px); height: min(48dvh, 380px); 
             background: radial-gradient(circle, #2ecc71 0%, #144418 100%); 
             border-radius: 40px; border: 12px solid #3d2b1f; 
             display: flex; flex-direction: column; padding: 0; box-sizing: border-box;
             box-shadow: inset 0 0 80px rgba(0,0,0,0.8); position: relative;
-            overflow: hidden;
+            overflow: hidden; z-index: 5;
         }
         .zona-reserva { height: 75px; border-bottom: 2px dashed rgba(255,255,255,0.15); display: flex; justify-content: center; align-items: center; gap: 8px; z-index: 10; position: relative; }
         .zona-tiro { flex-grow: 1; position: relative; width: 100%; overflow: visible; }
@@ -71,22 +75,25 @@
         .puntuando { border: 4px solid var(--neon-green); box-shadow: 0 0 20px var(--neon-green); z-index: 50; }
         .reservado { position: static !important; transform: scale(0.7) rotate(0deg) !important; opacity: 0.9; margin: 0 2px; }
 
-        .controles { display: flex; gap: 15px; width: min(94vw, 550px); justify-content: center; margin-top: 5px; }
-        button { flex: 1; padding: 16px 0; font-size: 16px; font-weight: bold; border-radius: 50px; border: none; cursor: pointer; }
+        .controles { display: flex; gap: 15px; width: min(94vw, 550px); justify-content: center; margin-top: 5px; z-index: 10; position: relative; }
+        button { 
+            flex: 1; padding: 16px 0; font-size: 16px; font-weight: bold; border-radius: 50px; border: none; cursor: pointer; 
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent; /* CRÍTICO PARA MÓVIL */
+        }
         .btn-tirar { background: var(--gold); color: #000; box-shadow: 0 5px 0 #b8860b; }
         .btn-plantar { background: #eee; color: #000; box-shadow: 0 5px 0 #999; }
         button:disabled { opacity: 0.3; filter: grayscale(1); pointer-events: none; }
 
         /* MODAL INSTRUCCIONES */
         #modal-instrucciones {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
             background: rgba(0,0,0,0.85); z-index: 3000;
             align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
         }
         #modal-instrucciones.activo { display: flex; }
         .modal-box {
             background: #111; border: 3px solid var(--gold); border-radius: 20px;
-            padding: 25px; max-width: 450px; width: 100%; max-height: 90vh;
+            padding: 25px; max-width: 450px; width: 100%; max-height: 90dvh;
             overflow-y: auto; text-align: center; box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
             position: relative; color: white;
         }
@@ -124,7 +131,6 @@
             <p>Selecciona jugadores</p>
             <div id="botones-inicio"></div>
             <button class="btn-abrir-modal" onclick="abrirModal()">📖 INSTRUCCIONES</button>
-            <!-- NUEVO: Botón pantalla completa -->
             <button class="btn-fullscreen" onclick="toggleFullscreen()">🖥️ PANTALLA COMPLETA</button>
         </div>
     </div>
@@ -282,7 +288,6 @@
     }
 
     function procesarResultados(indices) {
-        // 🆕 REGLA: 5 Ases en una tirada = Victoria instantánea
         if (indices.length === 5 && indices.every(val => val === 5)) {
             decir("¡CINCO ASES! ¡VICTORIA INSTANTÁNEA PARA EL JUGADOR " + (turnoIdx + 1) + "!");
             setTimeout(() => {
@@ -369,7 +374,6 @@
         document.getElementById('btn-tirar').disabled = false;
         document.getElementById('btn-plantar').disabled = !puede;
         
-        // 🗣️ FRASE CONTEXTUAL: Singular si queda 1 dado, Plural si quedan 2+
         if (puede) {
             const frase = dadosActivos === 1 
                 ? "Te queda 1 dado. ¿Arriesgas o te plantas?" 
@@ -414,12 +418,17 @@
         if (e.target === this) cerrarModal();
     });
 
-    // 🖥️ NUEVO: Lógica Pantalla Completa
+    // 🖥️ PANTALLA COMPLETA OPTIMIZADA PARA MÓVIL
     function toggleFullscreen() {
         if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(e => console.log(e));
+            document.documentElement.requestFullscreen().catch(() => {});
+            // Forzar recálculo de viewport tras entrar en fullscreen
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+                window.scrollTo(0, 0);
+            }, 300);
         } else {
-            document.exitFullscreen().catch(e => console.log(e));
+            document.exitFullscreen().catch(() => {});
         }
     }
     document.addEventListener('fullscreenchange', () => {
