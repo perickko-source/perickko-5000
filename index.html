@@ -368,17 +368,19 @@
         document.getElementById('btn-tirar').disabled = false;
         document.getElementById('btn-plantar').disabled = !puede;
         
-        // 🗣️ FRASE CONTEXTUAL CORREGIDA
+        // 🗣️ FRASE CONTEXTUAL OPTIMIZADA
         if (puede) {
             let frase = "";
-            if (dadosActivos === 5) {
+            // 0 dados = mesa limpia, 5 dados = inicio de turno. Ambos significan "todos los dados"
+            if (dadosActivos === 0 || dadosActivos === 5) {
                 frase = "Tienes todos los dados. ¿Te arriesgas o te plantas?";
             } else if (dadosActivos === 1) {
                 frase = "Te queda 1 dado. ¿Te arriesgas o te plantas?";
             } else {
                 frase = "Te quedan " + dadosActivos + " dados. ¿Te arriesgas o te plantas?";
             }
-            setTimeout(() => decir(frase), 300);
+            // 600ms de espera para evitar solapamientos con animaciones/sonidos previos
+            setTimeout(() => decir(frase), 600);
         }
     }
 
