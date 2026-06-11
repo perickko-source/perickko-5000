@@ -234,13 +234,12 @@
         "¡Ostia Puta, Ni un puto punto!", "¡Otra vez cero, ja ja ja!", "¡Cero, ahora vas y lo cascas!"
     ];
 
-    // 🗣️ VOZ OPTIMIZADA (sin cancel(), encolado natural seguro)
     function decir(texto, opciones = {}) {
         if (!texto) return;
         const msg = new SpeechSynthesisUtterance(texto);
         msg.lang = 'es-ES';
         msg.pitch = opciones.pitch || 1;
-        msg.rate = opciones.rate || 0.95; // Ligeramente más lento para evitar cortes en móvil
+        msg.rate = opciones.rate || 0.95;
         msg.volume = 1;
         window.speechSynthesis.speak(msg);
     }
@@ -359,6 +358,9 @@
         indices.forEach(idx => conteo[idx]++);
         let ptsTirada = 0, usados = 0;
 
+        // ✅ CORRECCIÓN: Contador para reservar SOLO los dados que realmente suman puntos
+        let reservadosPorCara = [0,0,0,0,0,0];
+
         indices.forEach((idx, i) => {
             const d = document.createElement('div');
             d.className = 'dado';
@@ -377,8 +379,19 @@
                 d.style.transform = `rotate(${rot}deg)`;
             }, i * 100);
 
-            let puntua = (idx === 4 || idx === 5 || conteo[idx] >= 3);
-            if (puntua) {
+            // ✅ LÓGICA FIJA: 
+            let debeReservarse = false;
+            if (idx === 4 || idx === 5) {
+                debeReservarse = true; // 1 y K siempre puntúan individualmente
+            } else if (conteo[idx] >= 3) {
+                // Solo se reservan los primeros 3 de cada trío. El 4º y 5º se quedan en mesa.
+                if (reservadosPorCara[idx] < 3) {
+                    debeReservarse = true;
+                    reservadosPorCara[idx]++;
+                }
+            }
+
+            if (debeReservarse) {
                 usados++;
                 setTimeout(() => {
                     d.classList.add('puntuando');
@@ -433,13 +446,11 @@
         document.getElementById('btn-tirar').disabled = false;
         document.getElementById('btn-plantar').disabled = !puede;
         
-        // ✅ Solo encola la pregunta si el botón está activado
         if (puede) {
             let frase = "";
             if (dadosActivos === 0 || dadosActivos === 5) frase = "Tienes todos los dados. ¿Te arriesgas o te plantas?";
             else if (dadosActivos === 1) frase = "Te queda un dado. ¿Te arriesgas o te plantas?";
             else frase = "Te quedan " + dadosActivos + " dados. ¿Te arriesgas o te plantas?";
-            
             setTimeout(() => decir(frase), 300);
         }
     }
@@ -452,7 +463,6 @@
 
         if (fraseTaunt) {
             decir(fraseTaunt, { pitch: 0.75, rate: 0.85 });
-            // Pequeña pausa para que la voz socarrona termine antes de la siguiente
             setTimeout(() => {
                 decir("Te plantas con " + puntosTurno + " puntos.");
                 finalizarPlantado();
