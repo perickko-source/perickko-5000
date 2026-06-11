@@ -234,12 +234,15 @@
         "¡Ostia Puta, Ni un puto punto!", "¡Otra vez cero, ja ja ja!", "¡Cero, ahora vas y lo cascas!"
     ];
 
+    // 🗣️ VOZ OPTIMIZADA (sin cancel(), encolado natural seguro)
     function decir(texto, opciones = {}) {
-        const mensaje = new SpeechSynthesisUtterance(texto);
-        mensaje.lang = 'es-ES';
-        mensaje.pitch = opciones.pitch || 1;
-        mensaje.rate = opciones.rate || 1;
-        window.speechSynthesis.speak(mensaje);
+        if (!texto) return;
+        const msg = new SpeechSynthesisUtterance(texto);
+        msg.lang = 'es-ES';
+        msg.pitch = opciones.pitch || 1;
+        msg.rate = opciones.rate || 0.95; // Ligeramente más lento para evitar cortes en móvil
+        msg.volume = 1;
+        window.speechSynthesis.speak(msg);
     }
 
     const containerBtns = document.getElementById('botones-inicio');
@@ -289,6 +292,7 @@
             grid.innerHTML += `<div id="j-box-${i}" class="jugador-box ${i===0?'activo':''}"><div class="label-jugador">${jugadores[i].nombre}</div><div id="j-pts-${i}" class="pts-t">0</div></div>`;
         }
         decir("Empieza el juego. Suerte.");
+        setTimeout(() => decir(`Turno de ${jugadores[0].nombre}`), 800);
         document.getElementById('anuncio').innerText = `Turno ${jugadores[0].nombre}`;
     }
 
@@ -417,22 +421,19 @@
     }
 
     function validarControles() {
-        // 🧹 Limpia la cola de voz para evitar solapamientos con turnos anteriores
-        window.speechSynthesis.cancel(); 
-
         let min = (jugadores[turnoIdx].puntos >= 4000) ? 100 : 300;
         let puede = (puntosTurno >= min && puntosTurno % 100 === 0);
         
         if (jugadores[turnoIdx].puntos + puntosTurno > 5000) {
             document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡TE PASASTE!</b>";
-            decir("Te has pasado de cinco mil.");
+            setTimeout(() => decir("Te has pasado de cinco mil."), 100);
             setTimeout(cambiarTurno, 1500);
             return;
         }
         document.getElementById('btn-tirar').disabled = false;
         document.getElementById('btn-plantar').disabled = !puede;
         
-        // ✅ Solo habla si el botón está ACTIVADO
+        // ✅ Solo encola la pregunta si el botón está activado
         if (puede) {
             let frase = "";
             if (dadosActivos === 0 || dadosActivos === 5) frase = "Tienes todos los dados. ¿Te arriesgas o te plantas?";
@@ -449,15 +450,28 @@
         else if (dadosActivos === 4) fraseTaunt = "¡Qué gallina!";
         else if (dadosActivos === 3) fraseTaunt = "¡Cobarde!";
 
-        if (fraseTaunt) decir(fraseTaunt, { pitch: 0.75, rate: 0.9 });
-        decir("Te plantas con " + puntosTurno + " puntos.");
-        
+        if (fraseTaunt) {
+            decir(fraseTaunt, { pitch: 0.75, rate: 0.85 });
+            // Pequeña pausa para que la voz socarrona termine antes de la siguiente
+            setTimeout(() => {
+                decir("Te plantas con " + puntosTurno + " puntos.");
+                finalizarPlantado();
+            }, 1200);
+        } else {
+            decir("Te plantas con " + puntosTurno + " puntos.");
+            finalizarPlantado();
+        }
+    }
+
+    function finalizarPlantado() {
         jugadores[turnoIdx].puntos += puntosTurno;
         document.getElementById(`j-pts-${turnoIdx}`).innerText = jugadores[turnoIdx].puntos;
         if (jugadores[turnoIdx].puntos === 5000) { 
-            decir("¡Enhorabuena! " + jugadores[turnoIdx].nombre + " ha ganado la partida.");
-            alert("¡VICTORIA PARA " + jugadores[turnoIdx].nombre + "!"); 
-            location.reload(); 
+            setTimeout(() => decir("¡Enhorabuena! " + jugadores[turnoIdx].nombre + " ha ganado la partida."), 500);
+            setTimeout(() => {
+                alert("¡VICTORIA PARA " + jugadores[turnoIdx].nombre + "!"); 
+                location.reload(); 
+            }, 1500);
         }
         else cambiarTurno();
     }
@@ -465,7 +479,6 @@
     function cambiarTurno() {
         puntosTurno = 0; 
         dadosActivos = 5;
-        window.speechSynthesis.cancel(); // Limpia cola al cambiar turno
         document.querySelectorAll('.jugador-box').forEach(b => b.classList.remove('activo'));
         turnoIdx = (turnoIdx + 1) % numJugadores;
         document.getElementById(`j-box-${turnoIdx}`).classList.add('activo');
