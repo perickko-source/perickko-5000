@@ -317,7 +317,7 @@
     }
 
     function tirar() {
-        if (dadosActivos === 0) dadosActivos = 5; // Seguridad
+        if (dadosActivos === 0) dadosActivos = 5;
         const cubilete = document.getElementById('cubilete');
         const zona = document.getElementById('zona-tiro');
         sonidoCubilete.currentTime = 0;
@@ -405,12 +405,11 @@
                 dadosActivos -= usados;
                 document.getElementById('pts-turno').innerText = puntosTurno;
                 
-                // ✅ CORRECCIÓN: "Mesa limpia" sincronizada correctamente
                 if(dadosActivos === 0) {
                     document.getElementById('anuncio').innerText = "¡MESA LIMPIA! TIRAS DE NUEVO";
                     decir("¡Mesa limpia!");
                     reserva.innerHTML = ""; 
-                    dadosActivos = 5; // Se resetea INMEDIATAMENTE para evitar estado 0
+                    dadosActivos = 5;
                 }
                 validarControles();
             }
@@ -418,10 +417,12 @@
     }
 
     function validarControles() {
+        // 🧹 Limpia la cola de voz para evitar solapamientos con turnos anteriores
+        window.speechSynthesis.cancel(); 
+
         let min = (jugadores[turnoIdx].puntos >= 4000) ? 100 : 300;
         let puede = (puntosTurno >= min && puntosTurno % 100 === 0);
         
-        // Si superas 5000 en total + turno, pierdes el turno inmediatamente
         if (jugadores[turnoIdx].puntos + puntosTurno > 5000) {
             document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡TE PASASTE!</b>";
             decir("Te has pasado de cinco mil.");
@@ -431,12 +432,14 @@
         document.getElementById('btn-tirar').disabled = false;
         document.getElementById('btn-plantar').disabled = !puede;
         
+        // ✅ Solo habla si el botón está ACTIVADO
         if (puede) {
             let frase = "";
             if (dadosActivos === 0 || dadosActivos === 5) frase = "Tienes todos los dados. ¿Te arriesgas o te plantas?";
             else if (dadosActivos === 1) frase = "Te queda un dado. ¿Te arriesgas o te plantas?";
             else frase = "Te quedan " + dadosActivos + " dados. ¿Te arriesgas o te plantas?";
-            setTimeout(() => decir(frase), 600);
+            
+            setTimeout(() => decir(frase), 300);
         }
     }
 
@@ -462,6 +465,7 @@
     function cambiarTurno() {
         puntosTurno = 0; 
         dadosActivos = 5;
+        window.speechSynthesis.cancel(); // Limpia cola al cambiar turno
         document.querySelectorAll('.jugador-box').forEach(b => b.classList.remove('activo'));
         turnoIdx = (turnoIdx + 1) % numJugadores;
         document.getElementById(`j-box-${turnoIdx}`).classList.add('activo');
