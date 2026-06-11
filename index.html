@@ -13,7 +13,6 @@
         }
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; gap: 10px; }
 
-        /* PANTALLA INICIAL */
         #pantalla-inicio {
             position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
             background: rgba(0,0,0,0.98); z-index: 2000;
@@ -21,15 +20,12 @@
         }
         .selector-box { background: #111; padding: 30px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; width: min(92vw, 420px); }
         .btn-jugador { width: 60px; height: 60px; margin: 10px; font-size: 24px; border-radius: 50%; border: 2px solid var(--gold); background: transparent; color: white; cursor: pointer; }
-        
-        /* NUEVO: Estilos para opciones de nombres */
         .btn-opcion { width: 100%; margin: 8px 0; padding: 12px; font-size: 15px; font-weight: bold; border-radius: 12px; border: 2px solid var(--gold); background: transparent; color: white; cursor: pointer; }
         .btn-opcion:hover { background: rgba(255,215,0,0.1); }
         .grid-inputs { display: grid; gap: 10px; margin-bottom: 10px; }
         .input-nombre { background: #222; border: 2px solid #555; color: white; padding: 10px; border-radius: 10px; font-size: 16px; text-align: center; font-family: 'Arial Black', sans-serif; }
         .input-nombre:focus { border-color: var(--gold); outline: none; }
 
-        /* MARCADORES */
         .panel-superior { width: min(94vw, 580px); text-align: center; z-index: 10; position: relative; }
         .grid-jugadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; margin-bottom: 5px; }
         .jugador-box { background: rgba(255,255,255,0.03); padding: 10px 5px; border-radius: 12px; border: 1px solid #333; transition: all 0.3s ease; }
@@ -41,7 +37,6 @@
         .val-turno { font-size: 32px; color: var(--gold); }
         #anuncio { font-size: 14px; color: #aaa; height: 20px; }
 
-        /* TABLERO CON BORDE GRUESO */
         .fieltro { 
             width: min(94vw, 550px); height: min(48dvh, 380px); 
             background: radial-gradient(circle, #2ecc71 0%, #144418 100%); 
@@ -53,7 +48,6 @@
         .zona-reserva { height: 75px; border-bottom: 2px dashed rgba(255,255,255,0.15); display: flex; justify-content: center; align-items: center; gap: 8px; z-index: 10; position: relative; }
         .zona-tiro { flex-grow: 1; position: relative; width: 100%; overflow: visible; }
 
-        /* CUBILETE */
         #cubilete {
             position: absolute; width: 110px; height: 140px;
             bottom: -160px; right: -30px;
@@ -71,7 +65,6 @@
             100% { bottom: -220px; right: -80px; transform: rotate(40deg); }
         }
 
-        /* DADOS */
         .dado { 
             position: absolute; width: 60px; height: 60px; background: #fff; 
             border-radius: 10px; display: flex; align-items: center; justify-content: center; 
@@ -91,7 +84,6 @@
         .btn-plantar { background: #eee; color: #000; box-shadow: 0 5px 0 #999; }
         button:disabled { opacity: 0.3; filter: grayscale(1); pointer-events: none; }
 
-        /* MODAL INSTRUCCIONES */
         #modal-instrucciones {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
             background: rgba(0,0,0,0.85); z-index: 3000;
@@ -238,12 +230,8 @@
     let posicionesDados = []; 
 
     const frasesCero = [
-        "¡Cero Patatero!",
-        "¡Una Mierda para ti!",
-        "¡Nada de nada!",
-        "¡Ostia Puta, Ni un puto punto!",
-        "¡Otra vez cero, ja ja ja!",
-        "¡Cero, ahora vas y lo cascas!"
+        "¡Cero Patatero!", "¡Una Mierda para ti!", "¡Nada de nada!",
+        "¡Ostia Puta, Ni un puto punto!", "¡Otra vez cero, ja ja ja!", "¡Cero, ahora vas y lo cascas!"
     ];
 
     function decir(texto, opciones = {}) {
@@ -293,6 +281,7 @@
 
     function iniciarPartida() {
         numJugadores = jugadores.length;
+        turnoIdx = 0; puntosTurno = 0; dadosActivos = 5;
         document.getElementById('pantalla-inicio').style.display = 'none';
         const grid = document.getElementById('grid-jugadores');
         grid.innerHTML = "";
@@ -300,6 +289,7 @@
             grid.innerHTML += `<div id="j-box-${i}" class="jugador-box ${i===0?'activo':''}"><div class="label-jugador">${jugadores[i].nombre}</div><div id="j-pts-${i}" class="pts-t">0</div></div>`;
         }
         decir("Empieza el juego. Suerte.");
+        document.getElementById('anuncio').innerText = `Turno ${jugadores[0].nombre}`;
     }
 
     function obtenerPosicionSegura() {
@@ -327,6 +317,7 @@
     }
 
     function tirar() {
+        if (dadosActivos === 0) dadosActivos = 5; // Seguridad
         const cubilete = document.getElementById('cubilete');
         const zona = document.getElementById('zona-tiro');
         sonidoCubilete.currentTime = 0;
@@ -413,10 +404,13 @@
                 puntosTurno += ptsTirada;
                 dadosActivos -= usados;
                 document.getElementById('pts-turno').innerText = puntosTurno;
+                
+                // ✅ CORRECCIÓN: "Mesa limpia" sincronizada correctamente
                 if(dadosActivos === 0) {
                     document.getElementById('anuncio').innerText = "¡MESA LIMPIA! TIRAS DE NUEVO";
                     decir("¡Mesa limpia!");
-                    setTimeout(() => { reserva.innerHTML = ""; dadosActivos = 5; }, 1200);
+                    reserva.innerHTML = ""; 
+                    dadosActivos = 5; // Se resetea INMEDIATAMENTE para evitar estado 0
                 }
                 validarControles();
             }
@@ -426,6 +420,8 @@
     function validarControles() {
         let min = (jugadores[turnoIdx].puntos >= 4000) ? 100 : 300;
         let puede = (puntosTurno >= min && puntosTurno % 100 === 0);
+        
+        // Si superas 5000 en total + turno, pierdes el turno inmediatamente
         if (jugadores[turnoIdx].puntos + puntosTurno > 5000) {
             document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡TE PASASTE!</b>";
             decir("Te has pasado de cinco mil.");
@@ -451,7 +447,6 @@
         else if (dadosActivos === 3) fraseTaunt = "¡Cobarde!";
 
         if (fraseTaunt) decir(fraseTaunt, { pitch: 0.75, rate: 0.9 });
-
         decir("Te plantas con " + puntosTurno + " puntos.");
         
         jugadores[turnoIdx].puntos += puntosTurno;
@@ -465,7 +460,8 @@
     }
 
     function cambiarTurno() {
-        puntosTurno = 0; dadosActivos = 5;
+        puntosTurno = 0; 
+        dadosActivos = 5;
         document.querySelectorAll('.jugador-box').forEach(b => b.classList.remove('activo'));
         turnoIdx = (turnoIdx + 1) % numJugadores;
         document.getElementById(`j-box-${turnoIdx}`).classList.add('activo');
@@ -478,12 +474,8 @@
         document.getElementById('btn-plantar').disabled = true;
     }
 
-    function abrirModal() {
-        document.getElementById('modal-instrucciones').classList.add('activo');
-    }
-    function cerrarModal() {
-        document.getElementById('modal-instrucciones').classList.remove('activo');
-    }
+    function abrirModal() { document.getElementById('modal-instrucciones').classList.add('activo'); }
+    function cerrarModal() { document.getElementById('modal-instrucciones').classList.remove('activo'); }
     document.getElementById('modal-instrucciones').addEventListener('click', function(e) {
         if (e.target === this) cerrarModal();
     });
@@ -491,19 +483,12 @@
     function toggleFullscreen() {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(() => {});
-            setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-                window.scrollTo(0, 0);
-            }, 300);
-        } else {
-            document.exitFullscreen().catch(() => {});
-        }
+            setTimeout(() => { window.dispatchEvent(new Event('resize')); window.scrollTo(0, 0); }, 300);
+        } else { document.exitFullscreen().catch(() => {}); }
     }
     document.addEventListener('fullscreenchange', () => {
         const btn = document.querySelector('.btn-fullscreen');
-        if (btn) {
-            btn.innerHTML = document.fullscreenElement ? '❌ SALIR DE PANTALLA COMPLETA' : '🖥️ PANTALLA COMPLETA';
-        }
+        if (btn) btn.innerHTML = document.fullscreenElement ? '❌ SALIR DE PANTALLA COMPLETA' : '🖥️ PANTALLA COMPLETA';
     });
 </script>
 </body>
