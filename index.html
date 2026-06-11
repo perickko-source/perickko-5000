@@ -13,25 +13,35 @@
         }
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; gap: 10px; }
 
+        /* PANTALLA INICIAL */
         #pantalla-inicio {
             position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
             background: rgba(0,0,0,0.98); z-index: 2000;
             display: flex; align-items: center; justify-content: center;
         }
-        .selector-box { background: #111; padding: 40px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; width: min(90vw, 400px); }
+        .selector-box { background: #111; padding: 30px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; width: min(92vw, 420px); }
         .btn-jugador { width: 60px; height: 60px; margin: 10px; font-size: 24px; border-radius: 50%; border: 2px solid var(--gold); background: transparent; color: white; cursor: pointer; }
+        
+        /* NUEVO: Estilos para opciones de nombres */
+        .btn-opcion { width: 100%; margin: 8px 0; padding: 12px; font-size: 15px; font-weight: bold; border-radius: 12px; border: 2px solid var(--gold); background: transparent; color: white; cursor: pointer; }
+        .btn-opcion:hover { background: rgba(255,215,0,0.1); }
+        .grid-inputs { display: grid; gap: 10px; margin-bottom: 10px; }
+        .input-nombre { background: #222; border: 2px solid #555; color: white; padding: 10px; border-radius: 10px; font-size: 16px; text-align: center; font-family: 'Arial Black', sans-serif; }
+        .input-nombre:focus { border-color: var(--gold); outline: none; }
 
+        /* MARCADORES */
         .panel-superior { width: min(94vw, 580px); text-align: center; z-index: 10; position: relative; }
         .grid-jugadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; margin-bottom: 5px; }
         .jugador-box { background: rgba(255,255,255,0.03); padding: 10px 5px; border-radius: 12px; border: 1px solid #333; transition: all 0.3s ease; }
         .jugador-box.activo { border-color: var(--neon-green); background: rgba(57, 255, 20, 0.08); box-shadow: 0 0 15px rgba(57, 255, 20, 0.2); transform: scale(1.05); }
-        .label-jugador { font-size: 10px; letter-spacing: 1px; color: #888; text-transform: uppercase; margin-bottom: 4px; }
+        .label-jugador { font-size: 10px; letter-spacing: 1px; color: #888; text-transform: uppercase; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .jugador-box.activo .label-jugador { color: var(--neon-green); }
         .pts-t { font-size: 20px; color: var(--gold); text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .marcador-turno { display: inline-block; background: rgba(0,0,0,0.8); padding: 2px 30px; border-radius: 50px; border: 2px solid var(--gold); margin: 5px 0; }
         .val-turno { font-size: 32px; color: var(--gold); }
         #anuncio { font-size: 14px; color: #aaa; height: 20px; }
 
+        /* TABLERO CON BORDE GRUESO */
         .fieltro { 
             width: min(94vw, 550px); height: min(48dvh, 380px); 
             background: radial-gradient(circle, #2ecc71 0%, #144418 100%); 
@@ -43,6 +53,7 @@
         .zona-reserva { height: 75px; border-bottom: 2px dashed rgba(255,255,255,0.15); display: flex; justify-content: center; align-items: center; gap: 8px; z-index: 10; position: relative; }
         .zona-tiro { flex-grow: 1; position: relative; width: 100%; overflow: visible; }
 
+        /* CUBILETE */
         #cubilete {
             position: absolute; width: 110px; height: 140px;
             bottom: -160px; right: -30px;
@@ -60,6 +71,7 @@
             100% { bottom: -220px; right: -80px; transform: rotate(40deg); }
         }
 
+        /* DADOS */
         .dado { 
             position: absolute; width: 60px; height: 60px; background: #fff; 
             border-radius: 10px; display: flex; align-items: center; justify-content: center; 
@@ -79,6 +91,7 @@
         .btn-plantar { background: #eee; color: #000; box-shadow: 0 5px 0 #999; }
         button:disabled { opacity: 0.3; filter: grayscale(1); pointer-events: none; }
 
+        /* MODAL INSTRUCCIONES */
         #modal-instrucciones {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
             background: rgba(0,0,0,0.85); z-index: 3000;
@@ -124,6 +137,17 @@
             <h1 style="color:var(--gold);">5.000 PRO</h1>
             <p>Selecciona jugadores</p>
             <div id="botones-inicio"></div>
+            
+            <div id="opciones-inicio" style="display:none; margin-top:15px;">
+                <button class="btn-opcion" onclick="juegoRapido()">⚡ JUEGO RÁPIDO</button>
+                <button class="btn-opcion" onclick="pedirNombres()">✏️ PONER NOMBRES</button>
+            </div>
+            
+            <div id="inputs-nombres" style="display:none; margin-top:15px;">
+                <div id="grid-inputs" class="grid-inputs"></div>
+                <button class="btn-opcion" style="margin-top:10px; border-color: var(--neon-green); color: var(--neon-green);" onclick="confirmarNombres()">▶️ COMENZAR</button>
+            </div>
+
             <button class="btn-abrir-modal" onclick="abrirModal()">📖 INSTRUCCIONES</button>
             <button class="btn-fullscreen" onclick="toggleFullscreen()">🖥️ PANTALLA COMPLETA</button>
         </div>
@@ -209,28 +233,71 @@
         { id: 5, valTrio: 1000, valInd: 100, html: '<div style="width:24px; height:24px; background:red; border-radius:50%;"></div>' }
     ];
 
-    let puntuaciones = [], turnoIdx = 0, puntosTurno = 0, dadosActivos = 5, numJugadores = 0;
+    let jugadores = [], turnoIdx = 0, puntosTurno = 0, dadosActivos = 5, numJugadores = 0;
+    let tempNumJugadores = 0;
     let posicionesDados = []; 
 
-    function decir(texto) {
+    const frasesCero = [
+        "¡Cero Patatero!",
+        "¡Una Mierda para ti!",
+        "¡Nada de nada!",
+        "¡Ostia Puta, Ni un puto punto!",
+        "¡Otra vez cero, ja ja ja!",
+        "¡Cero, ahora vas y lo cascas!"
+    ];
+
+    function decir(texto, opciones = {}) {
         const mensaje = new SpeechSynthesisUtterance(texto);
         mensaje.lang = 'es-ES';
+        mensaje.pitch = opciones.pitch || 1;
+        mensaje.rate = opciones.rate || 1;
         window.speechSynthesis.speak(mensaje);
     }
 
     const containerBtns = document.getElementById('botones-inicio');
     for(let i=2; i<=6; i++) {
-        containerBtns.innerHTML += `<button class="btn-jugador" onclick="iniciarJuego(${i})">${i}</button>`;
+        containerBtns.innerHTML += `<button class="btn-jugador" onclick="seleccionarCantidad(${i})">${i}</button>`;
     }
 
-    function iniciarJuego(n) {
-        numJugadores = n;
-        puntuaciones = new Array(n).fill(0);
+    function seleccionarCantidad(n) {
+        tempNumJugadores = n;
+        document.getElementById('opciones-inicio').style.display = 'block';
+        document.getElementById('botones-inicio').style.display = 'none';
+    }
+
+    function juegoRapido() {
+        jugadores = [];
+        for(let i=0; i<tempNumJugadores; i++) jugadores.push({ nombre: "Jugador " + (i+1), puntos: 0 });
+        iniciarPartida();
+    }
+
+    function pedirNombres() {
+        const grid = document.getElementById('grid-inputs');
+        grid.innerHTML = '';
+        for(let i=0; i<tempNumJugadores; i++) {
+            grid.innerHTML += `<input type="text" class="input-nombre" maxlength="10" placeholder="Jugador ${i+1}" autocomplete="off">`;
+        }
+        document.getElementById('inputs-nombres').style.display = 'block';
+        document.getElementById('opciones-inicio').style.display = 'none';
+    }
+
+    function confirmarNombres() {
+        jugadores = [];
+        document.querySelectorAll('.input-nombre').forEach((inp, i) => {
+            let nombre = inp.value.trim();
+            if (!nombre) nombre = "Jugador " + (i+1);
+            jugadores.push({ nombre: nombre, puntos: 0 });
+        });
+        iniciarPartida();
+    }
+
+    function iniciarPartida() {
+        numJugadores = jugadores.length;
         document.getElementById('pantalla-inicio').style.display = 'none';
         const grid = document.getElementById('grid-jugadores');
         grid.innerHTML = "";
-        for(let i=0; i<n; i++) {
-            grid.innerHTML += `<div id="j-box-${i}" class="jugador-box ${i===0?'activo':''}"><div class="label-jugador">Jugador ${i+1}</div><div id="j-pts-${i}" class="pts-t">0</div></div>`;
+        for(let i=0; i<numJugadores; i++) {
+            grid.innerHTML += `<div id="j-box-${i}" class="jugador-box ${i===0?'activo':''}"><div class="label-jugador">${jugadores[i].nombre}</div><div id="j-pts-${i}" class="pts-t">0</div></div>`;
         }
         decir("Empieza el juego. Suerte.");
     }
@@ -283,9 +350,9 @@
 
     function procesarResultados(indices) {
         if (indices.length === 5 && indices.every(val => val === 5)) {
-            decir("¡CINCO ASES! ¡VICTORIA INSTANTÁNEA PARA EL JUGADOR " + (turnoIdx + 1) + "!");
+            decir("¡CINCO ASES! ¡VICTORIA INSTANTÁNEA PARA " + jugadores[turnoIdx].nombre + "!");
             setTimeout(() => {
-                alert("🏆 ¡JUGADOR " + (turnoIdx + 1) + " SACÓ 5 ASES!\n¡GANADOR DE LA PARTIDA!");
+                alert("🏆 ¡" + jugadores[turnoIdx].nombre + " SACÓ 5 ASES!\n¡GANADOR DE LA PARTIDA!");
                 location.reload();
             }, 800);
             return;
@@ -340,7 +407,7 @@
         setTimeout(() => {
             if (ptsTirada === 0) {
                 document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡NADA! PIERDES TURNO</b>";
-                decir("¡Cero patatero!");
+                decir(frasesCero[Math.floor(Math.random() * frasesCero.length)]);
                 setTimeout(cambiarTurno, 2000);
             } else {
                 puntosTurno += ptsTirada;
@@ -357,9 +424,9 @@
     }
 
     function validarControles() {
-        let min = (puntuaciones[turnoIdx] >= 4000) ? 100 : 300;
+        let min = (jugadores[turnoIdx].puntos >= 4000) ? 100 : 300;
         let puede = (puntosTurno >= min && puntosTurno % 100 === 0);
-        if (puntuaciones[turnoIdx] + puntosTurno > 5000) {
+        if (jugadores[turnoIdx].puntos + puntosTurno > 5000) {
             document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡TE PASASTE!</b>";
             decir("Te has pasado de cinco mil.");
             setTimeout(cambiarTurno, 1500);
@@ -368,27 +435,30 @@
         document.getElementById('btn-tirar').disabled = false;
         document.getElementById('btn-plantar').disabled = !puede;
         
-        // 🗣️ FRASE CONTEXTUAL OPTIMIZADA
         if (puede) {
             let frase = "";
-            if (dadosActivos === 0 || dadosActivos === 5) {
-                frase = "Tienes todos los dados. ¿Te arriesgas o te plantas?";
-            } else if (dadosActivos === 1) {
-                frase = "Te queda un dado. ¿Te arriesgas o te plantas?";
-            } else {
-                frase = "Te quedan " + dadosActivos + " dados. ¿Te arriesgas o te plantas?";
-            }
+            if (dadosActivos === 0 || dadosActivos === 5) frase = "Tienes todos los dados. ¿Te arriesgas o te plantas?";
+            else if (dadosActivos === 1) frase = "Te queda un dado. ¿Te arriesgas o te plantas?";
+            else frase = "Te quedan " + dadosActivos + " dados. ¿Te arriesgas o te plantas?";
             setTimeout(() => decir(frase), 600);
         }
     }
 
     function plantarse() {
+        let fraseTaunt = "";
+        if (dadosActivos === 5) fraseTaunt = "¡Cagao!";
+        else if (dadosActivos === 4) fraseTaunt = "¡Qué gallina!";
+        else if (dadosActivos === 3) fraseTaunt = "¡Cobarde!";
+
+        if (fraseTaunt) decir(fraseTaunt, { pitch: 0.75, rate: 0.9 });
+
         decir("Te plantas con " + puntosTurno + " puntos.");
-        puntuaciones[turnoIdx] += puntosTurno;
-        document.getElementById(`j-pts-${turnoIdx}`).innerText = puntuaciones[turnoIdx];
-        if (puntuaciones[turnoIdx] === 5000) { 
-            decir("¡Enhorabuena! Jugador " + (turnoIdx+1) + " ha ganado la partida.");
-            alert("¡VICTORIA PARA J" + (turnoIdx+1) + "!"); 
+        
+        jugadores[turnoIdx].puntos += puntosTurno;
+        document.getElementById(`j-pts-${turnoIdx}`).innerText = jugadores[turnoIdx].puntos;
+        if (jugadores[turnoIdx].puntos === 5000) { 
+            decir("¡Enhorabuena! " + jugadores[turnoIdx].nombre + " ha ganado la partida.");
+            alert("¡VICTORIA PARA " + jugadores[turnoIdx].nombre + "!"); 
             location.reload(); 
         }
         else cambiarTurno();
@@ -402,8 +472,8 @@
         document.getElementById('pts-turno').innerText = "0";
         document.getElementById('reserva').innerHTML = "";
         document.getElementById('zona-tiro').querySelectorAll('.dado').forEach(d => d.remove());
-        document.getElementById('anuncio').innerText = `Turno Jugador ${turnoIdx+1}`;
-        decir("Turno del jugador " + (turnoIdx+1));
+        document.getElementById('anuncio').innerText = `Turno ${jugadores[turnoIdx].nombre}`;
+        decir("Turno de " + jugadores[turnoIdx].nombre);
         document.getElementById('btn-tirar').disabled = false;
         document.getElementById('btn-plantar').disabled = true;
     }
@@ -418,7 +488,6 @@
         if (e.target === this) cerrarModal();
     });
 
-    // 🖥️ PANTALLA COMPLETA OPTIMIZADA PARA MÓVIL
     function toggleFullscreen() {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(() => {});
