@@ -74,7 +74,6 @@
         ol.modal-list li { counter-increment: item; }
         ol.modal-list li::before { content: counter(item) "."; color: var(--gold); position: absolute; left: 0; font-size: 14px; }
         .inline-dado { display: inline-flex; width: 18px; height: 18px; background: white; border-radius: 4px; margin-right: 5px; vertical-align: middle; align-items: center; justify-content: center; }
-        /* 🔽 NUEVO: Estilos portada y barra de carga 🔽 */
         #pantalla-carga {
             position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
             background: #050505 url('portada.png') center/cover no-repeat;
@@ -91,17 +90,12 @@
             height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), #fff, var(--gold));
             box-shadow: 0 0 15px var(--gold); transition: width 6s cubic-bezier(0.25, 1, 0.5, 1);
         }
-        /* 🔼 FIN Estilos portada 🔼 */
     </style>
 </head>
 <body>
-    <!-- 🔽 NUEVO: Pantalla de carga / Portada 🔽 -->
     <div id="pantalla-carga">
-        <div class="barra-carga-contenedor">
-            <div class="barra-carga-relleno"></div>
-        </div>
+        <div class="barra-carga-contenedor"><div class="barra-carga-relleno"></div></div>
     </div>
-    <!-- 🔼 FIN Pantalla de carga 🔼 -->
 
     <div id="pantalla-inicio">
         <div class="selector-box">
@@ -171,7 +165,6 @@
         window.speechSynthesis.speak(msg);
     }
 
-    // 🔧 Limpieza sincrónica y selectiva
     function limpiarZonaActiva() {
         document.querySelectorAll('#zona-tiro .dado').forEach(d => d.remove());
         posicionesDados = [];
@@ -215,8 +208,6 @@
     function tirar() {
         if (bloqueo) return;
         bloqueo = true;
-        
-        // 🔧 Reset sincrónico absoluto de la zona de tiro
         limpiarZonaActiva();
         if (dadosActivos === 0 || dadosActivos > 5) dadosActivos = 5;
         
@@ -277,10 +268,18 @@
             else { if(id===4) ptsTirada += cant*50; if(id===5) ptsTirada += cant*100; }
         });
 
+        // 🛡️ PROTECCIÓN ANTI-DADOS FANTASMA
         dadosReservados.forEach((d, i) => {
             setTimeout(() => {
-                d.classList.add('puntuando');
-                setTimeout(() => { d.classList.replace('puntuando', 'reservado'); reserva.appendChild(d); }, 800);
+                if (d.parentNode) { // ✅ Solo actúa si el dado sigue en el DOM
+                    d.classList.add('puntuando');
+                    setTimeout(() => { 
+                        if (d.parentNode) { // ✅ Segunda comprobación antes de mover
+                            d.classList.replace('puntuando', 'reservado'); 
+                            reserva.appendChild(d); 
+                        }
+                    }, 800);
+                }
             }, 1200 + i*100);
         });
 
@@ -299,7 +298,7 @@
             if (dadosActivos === 0) {
                 document.getElementById('anuncio').innerText = "¡MESA LIMPIA! TIRAS DE NUEVO";
                 decir("¡Mesa limpia!");
-                limpiarTodo(); // Borra DOM y reserva sincrónicamente
+                limpiarTodo(); 
                 dadosActivos = 5;
                 setTimeout(() => { bloqueo = false; actualizarBotones(); }, 400);
                 return;
@@ -394,24 +393,19 @@
         const btn = document.querySelector('.btn-fullscreen');
         if(btn) btn.innerHTML = document.fullscreenElement ? '❌ SALIR DE PANTALLA COMPLETA' : '🖥️ PANTALLA COMPLETA';
     });
-    // 🔽 NUEVO: Lógica de pantalla de carga 🔽
+
     document.addEventListener('DOMContentLoaded', () => {
         const barra = document.querySelector('.barra-carga-relleno');
         const pantallaCarga = document.getElementById('pantalla-carga');
         if (barra && pantallaCarga) {
-            void barra.offsetWidth; // Fuerza reflow para activar la transición CSS
+            void barra.offsetWidth;
             barra.style.width = '100%';
-            
-            // Espera exacta de 6s de animación + 0.3s de margen, luego desvanece
             setTimeout(() => {
                 pantallaCarga.classList.add('oculto');
-                setTimeout(() => {
-                    if(pantallaCarga.parentNode) pantallaCarga.remove();
-                }, 800); // Coincide con la transición de opacidad
+                setTimeout(() => { if(pantallaCarga.parentNode) pantallaCarga.remove(); }, 800);
             }, 6300);
         }
     });
-    // 🔼 FIN Lógica de carga 🔼
 </script>
 </body>
 </html>
