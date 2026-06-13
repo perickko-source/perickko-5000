@@ -136,15 +136,25 @@
 
     let jugadores = [], turnoIdx = 0, puntosTurno = 0, dadosActivos = 5, numJugadores = 0;
     let tempNumJugadores = 0, posicionesDados = [];
-    let bloqueo = false; // Bloqueo de interacción durante cálculos/animaciones
+    let bloqueo = false;
     const frasesCero = ["¡Cero Patatero!", "¡Una Mierda para ti!", "¡Nada de nada!", "¡Ostia Puta, Ni un puto punto!", "¡Otra vez cero, ja ja ja!", "¡Cero, ahora vas y lo cascas!"];
 
-    // 🗣️ VOZ NATURAL: Sin cancel(). La cola del navegador encola automáticamente sin cortes.
     function decir(texto, opciones = {}) {
         if (!texto) return;
         const msg = new SpeechSynthesisUtterance(texto);
         msg.lang = 'es-ES'; msg.pitch = opciones.pitch || 1; msg.rate = opciones.rate || 0.95; msg.volume = 1;
         window.speechSynthesis.speak(msg);
+    }
+
+    // 🔧 Limpieza sincrónica y selectiva
+    function limpiarZonaActiva() {
+        document.querySelectorAll('#zona-tiro .dado').forEach(d => d.remove());
+        posicionesDados = [];
+    }
+    function limpiarTodo() {
+        document.querySelectorAll('.dado').forEach(d => d.remove());
+        document.getElementById('reserva').innerHTML = "";
+        posicionesDados = [];
     }
 
     const containerBtns = document.getElementById('botones-inicio');
@@ -160,6 +170,7 @@
         document.getElementById('pantalla-inicio').style.display = 'none';
         const grid = document.getElementById('grid-jugadores'); grid.innerHTML = "";
         for(let i=0; i<numJugadores; i++) grid.innerHTML += `<div id="j-box-${i}" class="jugador-box ${i===0?'activo':''}"><div class="label-jugador">${jugadores[i].nombre}</div><div id="j-pts-${i}" class="pts-t">0</div></div>`;
+        limpiarTodo();
         decir("Empieza el juego. Suerte.");
         setTimeout(() => decir(`Turno de ${jugadores[0].nombre}`), 600);
         document.getElementById('anuncio').innerText = `Turno ${jugadores[0].nombre}`;
@@ -179,12 +190,13 @@
     function tirar() {
         if (bloqueo) return;
         bloqueo = true;
-        if (dadosActivos === 0) dadosActivos = 5;
         
-        const cubilete = document.getElementById('cubilete'), zona = document.getElementById('zona-tiro');
+        // 🔧 Reset sincrónico absoluto de la zona de tiro
+        limpiarZonaActiva();
+        if (dadosActivos === 0 || dadosActivos > 5) dadosActivos = 5;
+        
+        const cubilete = document.getElementById('cubilete');
         sonidoCubilete.currentTime = 0; sonidoCubilete.play().catch(() => {});
-        zona.querySelectorAll('.dado').forEach(d => d.remove()); 
-        posicionesDados = []; 
         cubilete.classList.remove('anim-lanzar'); void cubilete.offsetWidth; cubilete.classList.add('anim-lanzar');
         
         document.getElementById('btn-tirar').disabled = true;
@@ -197,10 +209,10 @@
     }
 
     function resolverTirada(indices) {
-        // 🏆 Victoria instantánea por 5 ases
         if (indices.length === 5 && indices.every(v => v === 5)) {
             decir("¡CINCO ASES! ¡VICTORIA INSTANTÁNEA PARA " + jugadores[turnoIdx].nombre + "!");
             setTimeout(() => { alert("🏆 ¡" + jugadores[turnoIdx].nombre + " SACÓ 5 ASES!\n¡GANADOR DE LA PARTIDA!"); location.reload(); }, 800);
+            bloqueo = false;
             return;
         }
 
@@ -212,7 +224,6 @@
         let reservadosPorCara = [0,0,0,0,0,0];
         let dadosReservados = [];
 
-        // Cálculo síncrono de reserva y puntuación
         indices.forEach((idx, i) => {
             const d = document.createElement('div');
             d.className = 'dado';
@@ -227,24 +238,20 @@
             setTimeout(() => { d.classList.add('visible'); d.style.transform = `rotate(${Math.random()*60-30}deg)`; }, i*100);
 
             let debeReservar = false;
-            if (idx === 4 || idx === 5) debeReservar = true; // 1 y K siempre puntúan individualmente
-            else if (conteo[idx] >= 3 && reservadosPorCara[idx] < 3) { // Tríos limitados a 3 dados
+            if (idx === 4 || idx === 5) debeReservar = true;
+            else if (conteo[idx] >= 3 && reservadosPorCara[idx] < 3) {
                 debeReservar = true;
                 reservadosPorCara[idx]++;
             }
 
-            if (debeReservar) {
-                dadosReservados.push(d);
-            }
+            if (debeReservar) dadosReservados.push(d);
         });
 
-        // Matemáticas exactas
         conteo.forEach((cant, id) => {
             if (cant >= 3) ptsTirada += CARAS[id].valTrio + (id===4?(cant-3)*50 : id===5?(cant-3)*100 : 0);
             else { if(id===4) ptsTirada += cant*50; if(id===5) ptsTirada += cant*100; }
         });
 
-        // Animación visual de reserva
         dadosReservados.forEach((d, i) => {
             setTimeout(() => {
                 d.classList.add('puntuando');
@@ -252,7 +259,6 @@
             }, 1200 + i*100);
         });
 
-        // Lógica post-animación (estado síncrono)
         setTimeout(() => {
             if (ptsTirada === 0) {
                 document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡NADA! PIERDES TURNO</b>";
@@ -268,9 +274,9 @@
             if (dadosActivos === 0) {
                 document.getElementById('anuncio').innerText = "¡MESA LIMPIA! TIRAS DE NUEVO";
                 decir("¡Mesa limpia!");
-                setTimeout(() => reserva.innerHTML = "", 600);
-                dadosActivos = 5; // Reset inmediato para lógica
-                setTimeout(() => { bloqueo = false; actualizarBotones(); }, 800);
+                limpiarTodo(); // Borra DOM y reserva sincrónicamente
+                dadosActivos = 5;
+                setTimeout(() => { bloqueo = false; actualizarBotones(); }, 400);
                 return;
             }
 
@@ -284,7 +290,6 @@
         let cumpleMin = (puntosTurno >= min);
         let multiplo100 = (puntosTurno % 100 === 0);
         let sePasa = (jugadores[turnoIdx].puntos + puntosTurno > 5000);
-
         let puedePlantar = cumpleMin && multiplo100 && !sePasa;
 
         document.getElementById('btn-tirar').disabled = false;
@@ -341,14 +346,12 @@
     }
 
     function cambiarTurno() {
+        limpiarTodo();
         puntosTurno = 0; dadosActivos = 5; bloqueo = false;
         document.querySelectorAll('.jugador-box').forEach(b => b.classList.remove('activo'));
         turnoIdx = (turnoIdx + 1) % numJugadores;
         document.getElementById(`j-box-${turnoIdx}`).classList.add('activo');
         document.getElementById('pts-turno').innerText = "0";
-        document.getElementById('reserva').innerHTML = "";
-        document.getElementById('zona-tiro').querySelectorAll('.dado').forEach(d => d.remove());
-        posicionesDados = [];
         document.getElementById('anuncio').innerText = `Turno ${jugadores[turnoIdx].nombre}`;
         decir("Turno de " + jugadores[turnoIdx].nombre);
         actualizarBotones();
