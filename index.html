@@ -9,6 +9,72 @@
         html, body { overflow: hidden; height: 100dvh; width: 100%; margin: 0; background: #050505; color: white; font-family: 'Arial Black', sans-serif; touch-action: none; }
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; gap: 10px; }
 
+        /* ================= PANTALLA DE CARGA ================= */
+        #pantalla-carga {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
+            background: #050505; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+            padding-bottom: 8vh; box-sizing: border-box; transition: opacity 0.8s ease;
+        }
+        #pantalla-carga.oculto { opacity: 0; pointer-events: none; }
+        .portada-img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('portada.png') center/contain no-repeat #050505; z-index: -1;
+        }
+        @media (max-width: 768px) {
+            .portada-img { top: 1.8vmin; left: 1.8vmin; width: calc(100% - 3.6vmin); height: calc(100% - 3.6vmin); }
+        }
+        .contenedor-ui-carga { position: relative; z-index: 2; width: 100%; display: flex; flex-direction: column; align-items: center; }
+        .barra-carga-contenedor {
+            width: min(85%, 400px); height: 14px; background: rgba(0,0,0,0.7);
+            border-radius: 12px; overflow: visible; border: 2px solid var(--gold);
+            box-shadow: 0 0 20px rgba(255,215,0,0.3); position: relative;
+        }
+        .barra-carga-relleno {
+            height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), #fff, var(--gold));
+            box-shadow: 0 0 15px var(--gold); border-radius: 10px;
+            transition: width 6s cubic-bezier(0.25, 1, 0.5, 1); position: relative;
+        }
+        .texto-carga {
+            color: var(--gold); font-family: 'Arial Black', sans-serif; font-size: 15px;
+            margin-top: 12px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 1px;
+            animation: parpadeo 1.2s infinite alternate;
+        }
+        @keyframes parpadeo { from { opacity: 0.5; } to { opacity: 1; } }
+        .chispa {
+            position: absolute; width: 5px; height: 5px; background: #fff;
+            border-radius: 50%; box-shadow: 0 0 6px var(--gold), 0 0 12px var(--gold);
+            pointer-events: none; animation: volarChispa 0.7s ease-out forwards;
+        }
+        @keyframes volarChispa {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+        /* =================================================== */
+
+        /* ================= MODAL GANADOR ================= */
+        #modal-ganador {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
+            background: rgba(0,0,0,0.92); z-index: 15000;
+            display: none; align-items: center; justify-content: center;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-ganador-contenido {
+            background: #111; border: 3px solid var(--gold); border-radius: 20px;
+            padding: 30px; text-align: center; max-width: 90%; width: 400px;
+            box-shadow: 0 0 40px rgba(255,215,0,0.4);
+        }
+        .modal-ganador-contenido h2 { color: var(--gold); font-size: 24px; margin-bottom: 15px; }
+        .nombre-ganador { color: #fff; font-size: 28px; font-weight: bold; margin: 20px 0; text-shadow: 0 2px 8px rgba(255,215,0,0.5); }
+        .btn-jugar-otra {
+            background: var(--gold); color: #000; border: none; padding: 12px 25px;
+            font-size: 16px; font-weight: bold; border-radius: 50px; cursor: pointer;
+            box-shadow: 0 4px 0 #b8860b; transition: transform 0.1s;
+        }
+        .btn-jugar-otra:active { transform: translateY(4px); box-shadow: none; }
+        /* =================================================== */
+
         #pantalla-inicio { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: rgba(0,0,0,0.98); z-index: 2000; display: flex; align-items: center; justify-content: center; }
         .selector-box { background: #111; padding: 30px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; width: min(92vw, 420px); }
         .btn-jugador { width: 60px; height: 60px; margin: 10px; font-size: 24px; border-radius: 50%; border: 2px solid var(--gold); background: transparent; color: white; cursor: pointer; }
@@ -74,28 +140,20 @@
         ol.modal-list li { counter-increment: item; }
         ol.modal-list li::before { content: counter(item) "."; color: var(--gold); position: absolute; left: 0; font-size: 14px; }
         .inline-dado { display: inline-flex; width: 18px; height: 18px; background: white; border-radius: 4px; margin-right: 5px; vertical-align: middle; align-items: center; justify-content: center; }
-        #pantalla-carga {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
-            background: #050505 url('portada.png') center/cover no-repeat;
-            z-index: 10000; display: flex; align-items: flex-end; justify-content: center;
-            padding-bottom: 8vh; box-sizing: border-box; transition: opacity 0.8s ease;
-        }
-        #pantalla-carga.oculto { opacity: 0; pointer-events: none; }
-        .barra-carga-contenedor {
-            width: min(85%, 400px); height: 14px; background: rgba(0,0,0,0.7);
-            border-radius: 12px; overflow: hidden; border: 2px solid var(--gold);
-            box-shadow: 0 0 20px rgba(255,215,0,0.3);
-        }
-        .barra-carga-relleno {
-            height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), #fff, var(--gold));
-            box-shadow: 0 0 15px var(--gold); transition: width 6s cubic-bezier(0.25, 1, 0.5, 1);
-        }
     </style>
 </head>
 <body>
+    <!-- ================= PANTALLA DE CARGA ================= -->
     <div id="pantalla-carga">
-        <div class="barra-carga-contenedor"><div class="barra-carga-relleno"></div></div>
+        <div class="portada-img"></div>
+        <div class="contenedor-ui-carga">
+            <div class="barra-carga-contenedor">
+                <div class="barra-carga-relleno" id="barra-relleno"></div>
+            </div>
+            <div class="texto-carga">Cargando...</div>
+        </div>
     </div>
+    <!-- =================================================== -->
 
     <div id="pantalla-inicio">
         <div class="selector-box">
@@ -103,7 +161,7 @@
             <p>Selecciona jugadores</p>
             <div id="botones-inicio"></div>
             <div id="opciones-inicio" style="display:none; margin-top:15px;">
-                <button class="btn-opcion" onclick="juegoRapido()">⚡ JUEGO RÁPIDO</button>
+                <button class="btn-opcion" onclick="juegoRapido()"> JUEGO RÁPIDO</button>
                 <button class="btn-opcion" onclick="pedirNombres()">✏️ PONER NOMBRES</button>
             </div>
             <div id="inputs-nombres" style="display:none; margin-top:15px;">
@@ -119,9 +177,9 @@
         <div class="modal-box">
             <h2>Instrucciones</h2><h1>🎲 5.000</h1>
             <div class="seccion-modal"><div class="titulo-seccion">🎯 Objetivo</div><div class="texto-modal">Gana quien llegue a <b>5.000 puntos exactos</b>.</div></div>
-            <div class="seccion-modal"><div class="titulo-seccion">💰 ¿Qué puntúa?</div><ul class="modal-list" style="padding-left:15px; margin-bottom:8px;"><li><span class="inline-dado"><div style="width:10px;height:10px;background:red;border-radius:50%;"></div></span> <b>1 🔴</b> (100 pts)</li><li><span class="inline-dado"><b style="font-size:12px; color:red;">K</b></span> <b>K 🔴</b> (50 pts)</li></ul><div class="texto-modal" style="text-align:center; color:#aaa; font-size:11px; margin-bottom:6px;">Cualquier trío (3+ iguales):</div><div class="grid-dados-modal"><div class="carta-dado-modal"><div class="dado-preview"><div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; width:70%;"><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div></div></div><span>3 Negros = 100</span></div><div class="carta-dado-modal"><div class="dado-preview"><div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; width:70%;"><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div></div></div><span>3 Rojos = 200</span></div><div class="carta-dado-modal"><div class="dado-preview"><b style="font-size:18px; color:#222">J</b></div><span>3 J = 300</span></div><div class="carta-dado-modal"><div class="dado-preview"><b style="font-size:18px; color:#222">Q</b></div><span>3 Q = 400</span></div><div class="carta-dado-modal"><div class="dado-preview"><b style="font-size:18px; color:red">K</b></div><span>3 K = 500</span></div><div class="carta-dado-modal"><div class="dado-preview"><div style="width:18px; height:18px; background:red; border-radius:50%;"></div></div><span>3 Ases = 1000</span></div></div></div>
+            <div class="seccion-modal"><div class="titulo-seccion">💰 ¿Qué puntúa?</div><ul class="modal-list" style="padding-left:15px; margin-bottom:8px;"><li><span class="inline-dado"><div style="width:10px;height:10px;background:red;border-radius:50%;"></div></span> <b>1 </b> (100 pts)</li><li><span class="inline-dado"><b style="font-size:12px; color:red;">K</b></span> <b>K 🔴</b> (50 pts)</li></ul><div class="texto-modal" style="text-align:center; color:#aaa; font-size:11px; margin-bottom:6px;">Cualquier trío (3+ iguales):</div><div class="grid-dados-modal"><div class="carta-dado-modal"><div class="dado-preview"><div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; width:70%;"><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div></div></div><span>3 Negros = 100</span></div><div class="carta-dado-modal"><div class="dado-preview"><div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; width:70%;"><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div></div></div><span>3 Rojos = 200</span></div><div class="carta-dado-modal"><div class="dado-preview"><b style="font-size:18px; color:#222">J</b></div><span>3 J = 300</span></div><div class="carta-dado-modal"><div class="dado-preview"><b style="font-size:18px; color:#222">Q</b></div><span>3 Q = 400</span></div><div class="carta-dado-modal"><div class="dado-preview"><b style="font-size:18px; color:red">K</b></div><span>3 K = 500</span></div><div class="carta-dado-modal"><div class="dado-preview"><div style="width:18px; height:18px; background:red; border-radius:50%;"></div></div><span>3 Ases = 1000</span></div></div></div>
             <div class="seccion-modal"><div class="titulo-seccion">🔄 En tu turno:</div><ol class="modal-list"><li>Tira</li><li>Los que puntúan se reservan</li><li>¿Te plantas o arriesgas?</li></ol><div class="aviso-modal">4. No puedes plantarte con valores sueltos (ej. 50 o 350). Tiene que ser número redondo.</div></div>
-            <div class="seccion-modal"><div class="titulo-seccion">⚠️ Ojo:</div><ul class="modal-list"><li>Sin puntos en la tirada → <span class="peligro-modal">pierdes turno</span></li><li>Todos puntúan → <b style="color:var(--neon-green)">tiras de nuevo con 5</b></li><li>Para plantarte: <b>300 pts</b> (mínimo)</li><li>A partir de 4000 puedes plantarte con un mínimo de 100, debes llegar a 5000</li><li class="peligro-modal">¡No superes 5.000!</li><li style="color: var(--gold); font-weight: bold; margin-top: 5px;">🏆 5 Ases en una tirada = ¡Victoria instantánea!</li></ul></div>
+            <div class="seccion-modal"><div class="titulo-seccion">️ Ojo:</div><ul class="modal-list"><li>Sin puntos en la tirada → <span class="peligro-modal">pierdes turno</span></li><li>Todos puntúan → <b style="color:var(--neon-green)">tiras de nuevo con 5</b></li><li>Para plantarte: <b>300 pts</b> (mínimo)</li><li>A partir de 4000 puedes plantarte con un mínimo de 100, debes llegar a 5000</li><li class="peligro-modal">¡No superes 5.000!</li><li style="color: var(--gold); font-weight: bold; margin-top: 5px;"> 5 Ases en una tirada = ¡Victoria instantánea!</li></ul></div>
             <button class="btn-modal" onclick="cerrarModal()">[ ✅ ENTENDIDO ]</button>
         </div>
     </div>
@@ -141,6 +199,16 @@
         <button id="btn-plantar" class="btn-plantar" onclick="plantarse()" disabled>PLANTARSE</button>
         <button id="btn-tirar" class="btn-tirar" onclick="tirar()">¡TIRAR!</button>
     </div>
+
+    <!-- ================= MODAL GANADOR ================= -->
+    <div id="modal-ganador">
+        <div class="modal-ganador-contenido">
+            <h2>🏆 ¡GANADOR!</h2>
+            <div id="nombre-ganador" class="nombre-ganador"></div>
+            <button class="btn-jugar-otra" onclick="location.reload()">🔄 JUGAR OTRA PARTIDA</button>
+        </div>
+    </div>
+    <!-- =================================================== -->
 
 <script>
     const sonidoCubilete = new Audio('cubilete.ogg'); 
@@ -226,8 +294,8 @@
 
     function resolverTirada(indices) {
         if (indices.length === 5 && indices.every(v => v === 5)) {
-            decir("¡CINCO ASES! ¡VICTORIA INSTANTÁNEA PARA " + jugadores[turnoIdx].nombre + "!");
-            setTimeout(() => { alert("🏆 ¡" + jugadores[turnoIdx].nombre + " SACÓ 5 ASES!\n¡GANADOR DE LA PARTIDA!"); location.reload(); }, 800);
+            decir("¡CINCO ASES! ¡VICTORIA INSTANTÁNEA!");
+            setTimeout(() => { mostrarModalGanador(jugadores[turnoIdx].nombre); }, 800);
             bloqueo = false;
             return;
         }
@@ -268,13 +336,12 @@
             else { if(id===4) ptsTirada += cant*50; if(id===5) ptsTirada += cant*100; }
         });
 
-        // 🛡️ PROTECCIÓN ANTI-DADOS FANTASMA
         dadosReservados.forEach((d, i) => {
             setTimeout(() => {
-                if (d.parentNode) { // ✅ Solo actúa si el dado sigue en el DOM
+                if (d.parentNode) { 
                     d.classList.add('puntuando');
                     setTimeout(() => { 
-                        if (d.parentNode) { // ✅ Segunda comprobación antes de mover
+                        if (d.parentNode) { 
                             d.classList.replace('puntuando', 'reservado'); 
                             reserva.appendChild(d); 
                         }
@@ -362,8 +429,8 @@
         document.getElementById(`j-pts-${turnoIdx}`).innerText = jugadores[turnoIdx].puntos;
         
         if (jugadores[turnoIdx].puntos === 5000) { 
-            setTimeout(() => decir("¡Enhorabuena! " + jugadores[turnoIdx].nombre + " ha ganado la partida."), 400);
-            setTimeout(() => { alert("¡VICTORIA PARA " + jugadores[turnoIdx].nombre + "!"); location.reload(); }, 1200);
+            setTimeout(() => decir("¡Enhorabuena!"), 400);
+            setTimeout(() => { mostrarModalGanador(jugadores[turnoIdx].nombre); }, 1200);
         } else {
             setTimeout(() => { cambiarTurno(); bloqueo = false; }, 1000);
         }
@@ -395,17 +462,50 @@
     });
 
     document.addEventListener('DOMContentLoaded', () => {
-        const barra = document.querySelector('.barra-carga-relleno');
+        const barra = document.getElementById('barra-relleno');
         const pantallaCarga = document.getElementById('pantalla-carga');
         if (barra && pantallaCarga) {
             void barra.offsetWidth;
             barra.style.width = '100%';
+            
+            const contenedorBarra = document.querySelector('.barra-carga-contenedor');
+            const intervaloChispas = setInterval(() => {
+                if (!pantallaCarga.classList.contains('oculto')) {
+                    const chispa = document.createElement('div');
+                    chispa.className = 'chispa';
+                    const anchoActual = barra.offsetWidth;
+                    chispa.style.left = (anchoActual - 2) + 'px';
+                    chispa.style.top = '2px';
+                    chispa.style.setProperty('--tx', (Math.random() * 30 - 15) + 'px');
+                    chispa.style.setProperty('--ty', (Math.random() * -40 - 15) + 'px');
+                    contenedorBarra.appendChild(chispa);
+                    setTimeout(() => chispa.remove(), 700);
+                }
+            }, 120);
+
             setTimeout(() => {
+                clearInterval(intervaloChispas);
                 pantallaCarga.classList.add('oculto');
                 setTimeout(() => { if(pantallaCarga.parentNode) pantallaCarga.remove(); }, 800);
             }, 6300);
         }
     });
+
+    // ================= LÓGICA MODAL GANADOR =================
+    function mostrarModalGanador(nombre) {
+        const modal = document.getElementById('modal-ganador');
+        document.getElementById('nombre-ganador').innerText = nombre;
+        modal.style.display = 'flex';
+        
+        // Voz anunciadora
+        decir(`El jugador ${nombre} ha ganado la partida. Un aplauso, por lo bien que ha jugado.`);
+        
+        // 🔊 APLAUSOS LOCALES (archivo ogg en misma carpeta)
+        const audioAplausos = new Audio('aplausos.ogg');
+        audioAplausos.volume = 0.6;
+        audioAplausos.play().catch(() => {});
+    }
+    // ======================================================
 </script>
 </body>
 </html>
